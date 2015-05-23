@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    =======================================================================
+    File:         layout-preferences.xml
+    Author:       Takis Diakoumis
+    Description:  Default pane layout file
+    Date:         $Date: 2010-03-10 16:22:50 +0300 (Ср, 10 мар 2010) $
+    Version:      $Revision: 144 $
+    =======================================================================
+-->
+
+<docked-tab-components>
+
+  <docked-tab>
+    <key>system.display.console</key>
+    <index>0</index>
+    <position>5</position>
+    <visible>true</visible>
+    <minimised>false</minimised>
+  </docked-tab>
+
+  <docked-tab>
+    <key>system.display.drivers</key>
+    <index>1</index>
+    <position>8</position>
+    <visible>true</visible>
+    <minimised>false</minimised>
+  </docked-tab>
+
+  <docked-tab>
+    <key>system.display.connections</key>
+    <index>0</index>
+    <position>8</position>
+    <visible>true</visible>
+    <minimised>false</minimised>
+  </docked-tab>
+
+  <docked-tab>
+    <key>system.display.keywords</key>
+    <index>2</index>
+    <position>6</position>
+    <visible>false</visible>
+    <minimised>false</minimised>
+  </docked-tab>
+
+  <docked-tab>
+    <key>system.display.notepad</key>
+    <index>0</index>
+    <position>6</position>
+    <visible>false</visible>
+    <minimised>false</minimised>
+  </docked-tab>
+
+  <docked-tab>
+    <key>system.display.state-codes</key>
+    <index>0</index>
+    <position>4</position>
+    <visible>false</visible>
+    <minimised>false</minimised>
+  </docked-tab>
+
+  <docked-tab>
+    <key>system.display.systemprops</key>
+    <index>2</index>
+    <position>4</position>
+    <visible>false</visible>
+    <minimised>false</minimised>
+  </docked-tab>
+
+</docked-tab-components>
