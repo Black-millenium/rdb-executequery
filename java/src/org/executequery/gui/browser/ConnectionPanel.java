@@ -512,6 +512,9 @@ public class ConnectionPanel extends ActionPanel
             certificateCombo.setEnabled(false);
             certInfoButton.setEnabled(false);
             System.setProperty("ncore.db.mf.auth", "false");
+            System.setProperty("ncore.db.mf.cert", "false");
+            System.setProperty("ncore.db.mf.cert_alias", "");
+            System.setProperty("ncore.db.mf.uselogin", "");
             break;
           case "Username and password (GOST R 34.11-94)":
             userField.setEnabled(true);
@@ -519,13 +522,19 @@ public class ConnectionPanel extends ActionPanel
             certificateCombo.setEnabled(false);
             certInfoButton.setEnabled(false);
             System.setProperty("ncore.db.mf.auth", "true");
+            System.setProperty("ncore.db.mf.cert", "false");
+            System.setProperty("ncore.db.mf.cert_alias", "");
+            System.setProperty("ncore.db.mf.uselogin", "true");
             break;
           case "Username, password and certificate":
             userField.setEnabled(true);
             passwordField.setEnabled(true);
             certificateCombo.setEnabled(true);
             certInfoButton.setEnabled(true);
-            System.setProperty("ncore.db.mf.auth", "true");;
+            System.setProperty("ncore.db.mf.auth", "true");
+            System.setProperty("ncore.db.mf.cert", "true");
+            System.setProperty("ncore.db.mf.cert_alias", certificateCombo.getSelectedItem().toString());
+            System.setProperty("ncore.db.mf.uselogin", "true");
             break;
           case "Certificate only":
             userField.setEnabled(false);
@@ -533,6 +542,9 @@ public class ConnectionPanel extends ActionPanel
             certificateCombo.setEnabled(true);
             certInfoButton.setEnabled(true);
             System.setProperty("ncore.db.mf.auth", "true");
+            System.setProperty("ncore.db.mf.cert", "true");
+            System.setProperty("ncore.db.mf.cert_alias", certificateCombo.getSelectedItem().toString());
+            System.setProperty("ncore.db.mf.uselogin", "false");
             break;
           default:
             authModeCombo.setSelectedIndex(0);
@@ -541,6 +553,8 @@ public class ConnectionPanel extends ActionPanel
             certificateCombo.setEnabled(false);
             certInfoButton.setEnabled(false);
             System.setProperty("ncore.db.mf.auth", "false");
+            System.setProperty("ncore.db.mf.cert", "false");
+            System.setProperty("ncore.db.mf.cert_alias", "");
             break;
         }
       }

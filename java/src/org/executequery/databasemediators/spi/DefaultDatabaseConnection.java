@@ -105,7 +105,6 @@ public class DefaultDatabaseConnection implements DatabaseConnection {
    */
   private boolean passwordStored;
 
-  private boolean multiAuth;
   /**
    * Whether the password is encrypted
    */

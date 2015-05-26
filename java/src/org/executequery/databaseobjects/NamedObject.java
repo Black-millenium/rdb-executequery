@@ -55,19 +55,19 @@ public interface NamedObject extends java.io.Serializable {
   public static final int TABLE = 6;
   public static final int TRIGGER = 7;
   public static final int VIEW = 8;
-
-  public static final int SYSTEM_VIEW = 13;
-
   public static final int SYSTEM_FUNCTION = 9;
-
   public static final int SYSTEM_STRING_FUNCTIONS = 10;
-
   public static final int SYSTEM_NUMERIC_FUNCTIONS = 11;
-
   public static final int SYSTEM_DATE_TIME_FUNCTIONS = 12;
+  public static final int SYSTEM_VIEW = 13;
+  public static final int DOMAINS = 14;
+  public static final int EXCEPTIONS = 15;
+  public static final int ROLES = 16;
+  public static final int UDFs = 17;
 
 
-  public static final String[] META_TYPES = {"FUNCTION",
+  public static final String[] META_TYPES = {
+      "FUNCTION",
       "INDEX",
       "PROCEDURE",
       "SEQUENCE",
@@ -80,7 +80,11 @@ public interface NamedObject extends java.io.Serializable {
       "SYSTEM_STRING_FUNCTIONS",
       "SYSTEM_NUMERIC_FUNCTIONS",
       "SYSTEM_DATE_TIME_FUNCTIONS",
-      "SYSTEM VIEW"};
+      "SYSTEM VIEW",
+      "DOMAINS",
+      "EXCEPTIONS",
+      "ROLES",
+      "UDFs"};
 
   /**
    * Marks this object as being 'reset', where for any loaded object

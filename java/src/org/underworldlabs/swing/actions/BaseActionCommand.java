@@ -125,7 +125,7 @@ public class BaseActionCommand extends AbstractAction {
    * class name specified which is loaded using
    * <code>Class.forName(...)</code>.
    *
-   * @param the command's fully qualified class name
+   * @param className command's fully qualified class name
    */
   public void setCommand(String className) {
 

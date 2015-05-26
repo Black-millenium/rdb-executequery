@@ -23,6 +23,7 @@ package org.executequery.gui.table;
 import org.executequery.GUIUtilities;
 import org.executequery.databasemediators.DatabaseConnection;
 import org.executequery.databasemediators.MetaDataValues;
+import org.executequery.databasemediators.spi.DatabaseConnectionFactoryImpl;
 import org.executequery.datasource.ConnectionManager;
 import org.executequery.gui.FocusComponentPanel;
 import org.executequery.gui.WidgetFactory;
