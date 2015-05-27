@@ -20,20 +20,23 @@
 
 package org.executequery.datasource;
 
-import biz.redsoft.ncore.db.jdbc.ConnectionProps;
-import biz.redsoft.ncore.db.jdbc.IsolationLevel;
-import biz.redsoft.ncore.db.jdbc.JdbcConnectionFactory;
+import biz.redsoft.security.cryptopro.exception.CryptoException;
 import biz.redsoft.security.dss.XmlSign;
 import biz.redsoft.security.gdsauth.AuthCryptoPluginImpl;
 import biz.redsoft.util.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.executequery.GUIUtilities;
 import org.executequery.databasemediators.DatabaseConnection;
 import org.executequery.log.Log;
+import org.firebirdsql.gds.GDSException;
+import org.firebirdsql.gds.ISCConstants;
+import org.firebirdsql.gds.impl.GDSFactory;
+import org.firebirdsql.gds.impl.GDSType;
 import org.firebirdsql.gds.impl.wire.auth.AuthCryptoPlugin;
+import org.firebirdsql.jca.FBSADataSource;
 import org.underworldlabs.jdbc.DataSourceException;
 
 import javax.sql.DataSource;
-import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.sql.Connection;
@@ -47,12 +50,6 @@ import java.util.Vector;
  * @date $Date: 2013-02-09 00:34:35 +1100 (Sat, 09 Feb 2013) $
  */
 public class ConnectionPoolImpl extends AbstractConnectionPool implements PooledConnectionListener {
-  // пул подключений
-  public static JdbcConnectionFactory factory;
-
-  static {
-    AuthCryptoPlugin.register(new AuthCryptoPluginImpl());
-  }
 
   private final List<PooledConnection> openConnections = new Vector<PooledConnection>();
   private final List<PooledConnection> activeConnections = new Vector<PooledConnection>();
@@ -61,36 +58,25 @@ public class ConnectionPoolImpl extends AbstractConnectionPool implements Pooled
   private int minimumConnections = MIN_POOL_SIZE;
   private int initialConnections = INITIAL_POOL_SIZE;
   private int defaultTxIsolation = -1;
-  private boolean isMfAuth = Boolean.parseBoolean(System.getProperty("ncore.db.mf.auth"));
-  private boolean isCert = Boolean.parseBoolean(System.getProperty("ncore.db.mf.cert"));
-  private boolean isLogin = Boolean.parseBoolean(System.getProperty("ncore.db.mf.uselogin"));
 
-  private DataSource dataSource;
+  private FBSADataSource dataSource;
+
+  // multifactor param
+  private boolean isMfAuth = Boolean.parseBoolean(System.getProperty("ncore.db.mf.auth"));
+  private boolean isLogin = Boolean.parseBoolean(System.getProperty("ncore.db.mf.uselogin"));
+  private String certAlias = System.getProperty("ncore.db.mf.cert_alias");
+
+  static {
+    try {
+      AuthCryptoPlugin.register(new AuthCryptoPluginImpl());
+    } catch (CryptoException e) {
+      Log.info("Error register AuthCryptoPlugin");
+    }
+  }
 
   public ConnectionPoolImpl(DatabaseConnection databaseConnection) {
     this.databaseConnection = databaseConnection;
-
-    if (isMfAuth) {
-      ConnectionProps props = new ConnectionProps(this.databaseConnection.getURL(),
-          isLogin ? this.databaseConnection.getUserName() : null,
-          isLogin ? this.databaseConnection.getUnencryptedPassword() : null,
-          null,
-          isMfAuth,
-          "Test process",
-          null,
-          isCert ? getCertbase64() : null);
-
-      try {
-        initMfConnectionFactory(props);
-      } catch (SQLException e) {
-        GUIUtilities.displayErrorMessage("Error connecting" + "\n" + e.toString());
-      }
-    }
     if (Log.isDebugEnabled()) Log.debug("Creating new pool for connection " + databaseConnection.getName());
-  }
-
-  public static void initMfConnectionFactory(ConnectionProps props) throws SQLException {
-    factory = JdbcConnectionFactory.getConnectionFactory(props);
   }
 
   public DatabaseConnection getDatabaseConnection() {
@@ -170,19 +156,40 @@ public class ConnectionPoolImpl extends AbstractConnectionPool implements Pooled
     }
   }
 
-  private Connection getConn() throws SQLException {
-    return factory.newConnection(IsolationLevel.READ_COMMITTED);
+  private void initDataSource() {
+    dataSource.setNonStandardProperty("isc_dpb_sql_dialect", String.valueOf(ISCConstants.SQL_DIALECT_CURRENT));
+    dataSource.setNonStandardProperty("isc_dpb_lc_ctype", "WIN1251");
+    dataSource.setNonStandardProperty("isc_dpb_process_name", "ExecuteQuery");
+    dataSource.setNonStandardProperty("isc_dpb_local_encoding", "Cp1251");
+
+    String username = databaseConnection.getUserName(),
+        password = databaseConnection.getPassword();
+
+    if (isMfAuth) {
+      dataSource.setNonStandardProperty("isc_dpb_trusted_auth", "1");
+      if (!biz.redsoft.util.StringUtils.isEmpty(certAlias))
+        dataSource.setNonStandardProperty("isc_dpb_certificate_base64", getCertbase64());
+      dataSource.setNonStandardProperty("isc_dpb_multi_factor_auth", "1");
+    }
+
+    if (isLogin) {
+      if (StringUtils.isNotBlank(username)) dataSource.setNonStandardProperty("isc_dpb_user_name", username);
+      if (StringUtils.isNotBlank(password)) dataSource.setNonStandardProperty("isc_dpb_password", password);
+    }
+
+    dataSource.setDatabase(databaseConnection.getSourceName());
   }
 
   private PooledConnection createConnection() {
     PooledConnection connection = null;
 
     try {
-      if (dataSource == null) dataSource = new SimpleDataSource(databaseConnection);
+      if (dataSource == null) {
+        dataSource = new SimpleDataSource(databaseConnection);
+        initDataSource();
+      }
 
-      Connection realConnection;
-      if (isMfAuth) realConnection = getConn();
-      else realConnection = dataSource.getConnection();
+      Connection realConnection = dataSource.getConnection();
 
       if (realConnection == null)
         throw new DataSourceException(
@@ -217,10 +224,6 @@ public class ConnectionPoolImpl extends AbstractConnectionPool implements Pooled
 
   public DataSource getDataSource() {
     return dataSource;
-  }
-
-  public void setDataSource(DataSource dataSource) {
-    this.dataSource = dataSource;
   }
 
   public int getMaximumConnections() {
@@ -285,9 +288,13 @@ public class ConnectionPoolImpl extends AbstractConnectionPool implements Pooled
   }
 
   private String getCertbase64() {
-    final Certificate certificate = XmlSign.getCertificate(System.getProperty("ncore.db.mf.cert_alias"));
+    final Certificate certificate = XmlSign.getCertificate(certAlias);
     try {
-      return certificate == null ? null : Base64.encodeBytes(certificate.getEncoded());
+      String cert = certificate == null ? null : Base64.encodeBytes(certificate.getEncoded());
+      if (cert != null && cert.contains("BEGIN CERTIFICATE")) return cert;
+
+      // for compatibility with Rdb < 2.5.9538
+      return "-----BEGIN CERTIFICATE-----\n" + cert + "\n-----END CERTIFICATE-----\n";
     } catch (CertificateEncodingException e) {
       GUIUtilities.displayErrorMessage("Error loading certificate" + "\n" + e.toString());
     }

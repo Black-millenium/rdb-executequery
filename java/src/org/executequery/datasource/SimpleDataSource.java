@@ -20,15 +20,26 @@
 
 package org.executequery.datasource;
 
+import biz.redsoft.security.cryptopro.exception.CryptoException;
+import biz.redsoft.security.dss.XmlSign;
+import biz.redsoft.security.gdsauth.AuthCryptoPluginImpl;
+import biz.redsoft.util.Base64;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
+import org.executequery.GUIUtilities;
 import org.executequery.databasemediators.DatabaseConnection;
 import org.executequery.databasemediators.DatabaseDriver;
 import org.executequery.log.Log;
+import org.firebirdsql.gds.ISCConstants;
+import org.firebirdsql.gds.impl.wire.auth.AuthCryptoPlugin;
+import org.firebirdsql.jca.FBSADataSource;
 import org.underworldlabs.jdbc.DataSourceException;
 import org.underworldlabs.util.MiscUtils;
 
 import javax.sql.DataSource;
 import java.io.PrintWriter;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.sql.*;
 import java.util.Iterator;
 import java.util.Properties;
@@ -40,7 +51,8 @@ import java.util.logging.Logger;
  * @date $Date: 2013-07-21 20:17:04 +1000 (Sun, 21 Jul 2013) $
  */
 @SuppressWarnings({"rawtypes"})
-public class SimpleDataSource implements DataSource, DatabaseDataSource {
+public class SimpleDataSource extends FBSADataSource
+    implements DataSource, DatabaseDataSource {
 
   static final String PORT = "[port]";
   static final String SOURCE = "[source]";
@@ -49,14 +61,10 @@ public class SimpleDataSource implements DataSource, DatabaseDataSource {
   private final String url;
   private final DatabaseConnection databaseConnection;
   private Properties properties = new Properties();
-  private Driver driver;
 
   public SimpleDataSource(DatabaseConnection databaseConnection) {
     this.databaseConnection = databaseConnection;
     if (databaseConnection.hasAdvancedProperties()) populateAdvancedProperties();
-
-    driver = loadDriver(databaseConnection.getJDBCDriver());
-    if (driver == null) throw new DataSourceException("Error loading specified JDBC driver");
     url = generateUrl(databaseConnection);
   }
 
@@ -66,13 +74,7 @@ public class SimpleDataSource implements DataSource, DatabaseDataSource {
 
   public Connection getConnection(String username, String password) throws SQLException {
     Properties advancedProperties = buildAdvancedProperties();
-
-    if (StringUtils.isNotBlank(username)) advancedProperties.put("user", username);
-    if (StringUtils.isNotBlank(password)) advancedProperties.put("password", password);
-
-    if (driver != null) return driver.connect(url, advancedProperties);
-
-    throw new DataSourceException("Error loading specified JDBC driver");
+    return super.getConnection();
   }
 
   private Properties buildAdvancedProperties() {
@@ -138,6 +140,11 @@ public class SimpleDataSource implements DataSource, DatabaseDataSource {
     return DriverManager.getLoginTimeout();
   }
 
+  @Override
+  public Logger getParentLogger() {
+    throw new NotImplementedException();
+  }
+
   public void setLoginTimeout(int timeout) throws SQLException {
     DriverManager.setLoginTimeout(timeout);
   }
@@ -150,25 +157,9 @@ public class SimpleDataSource implements DataSource, DatabaseDataSource {
     DriverManager.setLogWriter(writer);
   }
 
-  public boolean isWrapperFor(Class<?> iface) throws SQLException {
-    return false;
-  }
-
-  public <T> T unwrap(Class<T> iface) throws SQLException {
-    return null;
-  }
-
   public String getJdbcUrl() {
     return url;
   }
-
-  public String getDriverName() {
-    return driver.getClass().getName();
-  }
-
-  public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-		return driver.getParentLogger();
-	}
 }
 
 
