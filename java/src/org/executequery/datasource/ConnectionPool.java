@@ -44,8 +44,6 @@ interface ConnectionPool {
 
   DataSource getDataSource();
 
-  void setDataSource(DataSource dataSource);
-
   int getMaximumUseCount();
 
   void setMaximumUseCount(int maximumUseCount);
