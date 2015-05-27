@@ -163,7 +163,7 @@ public class ConnectionPoolImpl extends AbstractConnectionPool implements Pooled
     dataSource.setNonStandardProperty("isc_dpb_local_encoding", "Cp1251");
 
     String username = databaseConnection.getUserName(),
-        password = databaseConnection.getPassword();
+        password = databaseConnection.getUnencryptedPassword();
 
     if (isMfAuth) {
       dataSource.setNonStandardProperty("isc_dpb_trusted_auth", "1");
