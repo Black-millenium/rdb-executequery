@@ -88,7 +88,6 @@ public class ConnectionPanel extends ActionPanel
   private JTextField hostField;
   private NumberTextField portField;
   private JTextField sourceField;
-  private JTextField urlField;
 
   private JLabel statusLabel;
 
@@ -166,7 +165,6 @@ public class ConnectionPanel extends ActionPanel
     portField = createNumberTextField();
     sourceField = createMatchedWidthTextField();
     userField = createTextField();
-    urlField = createMatchedWidthTextField();
     nameField.addFocusListener(new ConnectionNameFieldListener(this));
     savePwdCheck = ActionUtilities.createCheckBox("Store Password", "setStorePassword");
     encryptPwdCheck = ActionUtilities.createCheckBox("Encrypt Password", "setEncryptPassword");
@@ -235,11 +233,8 @@ public class ConnectionPanel extends ActionPanel
     addLabelFieldPair(mainPanel, "Port:",
         portField, "Database port number", gbc);
 
-    addLabelFieldPair(mainPanel, "Data Source:",
-        sourceField, "Data source name", gbc);
-
-    addLabelFieldPair(mainPanel, "JDBC URL:",
-        urlField, "The full JDBC URL for this connection (optional)", gbc);
+    addLabelFieldPair(mainPanel, "Database:",
+        sourceField, "Database name", gbc);
 
     addDriverFields(mainPanel, gbc);
 
@@ -645,13 +640,12 @@ public class ConnectionPanel extends ActionPanel
       return;
     }
     // check if we have a url - if not check the port is valid
-    if (StringUtils.isBlank(urlField.getText())) {
-      String port = portField.getText();
-      if (!StringUtils.isNumeric(port)) {
-        GUIUtilities.displayErrorMessage("Invalid port number");
-        return;
-      }
+    String port = portField.getText();
+    if (!StringUtils.isNumeric(port)) {
+      GUIUtilities.displayErrorMessage("Invalid port number");
+      return;
     }
+
     // otherwise - good to proceed
 
     // populate the object with field values
@@ -1014,7 +1008,6 @@ public class ConnectionPanel extends ActionPanel
     hostField.setText(databaseConnection.getHost());
     portField.setText(databaseConnection.getPort());
     sourceField.setText(databaseConnection.getSourceName());
-    urlField.setText(databaseConnection.getURL());
     nameField.setText(databaseConnection.getName());
 
     // assign as the current connection
@@ -1051,7 +1044,6 @@ public class ConnectionPanel extends ActionPanel
     databaseConnection.setHost(hostField.getText());
     databaseConnection.setPort(portField.getText());
     databaseConnection.setSourceName(sourceField.getText());
-    databaseConnection.setURL(urlField.getText());
 
     // jdbc driver selection
     int driverIndex = driverCombo.getSelectedIndex();
