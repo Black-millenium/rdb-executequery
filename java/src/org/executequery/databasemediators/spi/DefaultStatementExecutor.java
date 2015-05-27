@@ -1328,10 +1328,9 @@ public class DefaultStatementExecutor implements StatementExecutor {
    * <p>Releases database resources held by this class.
    */
   public void releaseResources() {
-
     try {
 
-      if (stmnt != null) {
+      if (stmnt != null && !stmnt.isClosed()) {
 
         stmnt.close();
       }
