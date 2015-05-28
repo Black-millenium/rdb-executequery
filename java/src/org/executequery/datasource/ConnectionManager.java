@@ -72,25 +72,14 @@ public final class ConnectionManager {
       DatabaseDriver driver = driverById(driverId);
 
       if (driver != null) {
-
         databaseConnection.setJDBCDriver(driver);
-
       } else {
-
         throw new DataSourceException("No JDBC driver specified");
       }
-
     }
 
     Log.info("Initialising data source for " + databaseConnection.getName());
-
-//        DataSource dataSource = new ConnectionDataSource(databaseConnection);
-//        ConnectionPool pool = new DefaultConnectionPool(dataSource);
-
-//        ConnectionPool pool = new C3poConnectionPool(databaseConnection);
     ConnectionPool pool = new ConnectionPoolImpl(databaseConnection);
-
-    //pool.setPoolScheme(SystemProperties.getIntProperty("connection.scheme"));
 
     pool.setMinimumConnections(SystemProperties.getIntProperty("user", "connection.initialcount"));
     pool.setInitialConnections(SystemProperties.getIntProperty("user", "connection.initialcount"));

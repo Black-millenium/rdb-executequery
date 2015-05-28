@@ -20,12 +20,8 @@
 
 package org.executequery.gui.browser;
 
-import biz.redsoft.ncore.db.jdbc.ConnectionProps;
-import biz.redsoft.ncore.db.jdbc.IsolationLevel;
-import biz.redsoft.ncore.db.jdbc.JdbcConnectionFactory;
 import biz.redsoft.security.cryptopro.CertUtils;
 import biz.redsoft.security.dss.XmlSign;
-import biz.redsoft.security.gdsauth.AuthCryptoPluginImpl;
 import org.apache.commons.lang.StringUtils;
 import org.executequery.Constants;
 import org.executequery.EventMediator;
@@ -44,7 +40,6 @@ import org.executequery.log.Log;
 import org.executequery.repository.DatabaseConnectionRepository;
 import org.executequery.repository.DatabaseDriverRepository;
 import org.executequery.repository.RepositoryCache;
-import org.firebirdsql.gds.impl.wire.auth.AuthCryptoPlugin;
 import org.underworldlabs.jdbc.DataSourceException;
 import org.underworldlabs.swing.*;
 import org.underworldlabs.swing.actions.ActionUtilities;
@@ -61,7 +56,6 @@ import java.awt.event.ActionListener;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -94,7 +88,6 @@ public class ConnectionPanel extends ActionPanel
   private JTextField hostField;
   private NumberTextField portField;
   private JTextField sourceField;
-  private JTextField urlField;
 
   private JLabel statusLabel;
 
@@ -172,7 +165,6 @@ public class ConnectionPanel extends ActionPanel
     portField = createNumberTextField();
     sourceField = createMatchedWidthTextField();
     userField = createTextField();
-    urlField = createMatchedWidthTextField();
     nameField.addFocusListener(new ConnectionNameFieldListener(this));
     savePwdCheck = ActionUtilities.createCheckBox("Store Password", "setStorePassword");
     encryptPwdCheck = ActionUtilities.createCheckBox("Encrypt Password", "setEncryptPassword");
@@ -241,11 +233,8 @@ public class ConnectionPanel extends ActionPanel
     addLabelFieldPair(mainPanel, "Port:",
         portField, "Database port number", gbc);
 
-    addLabelFieldPair(mainPanel, "Data Source:",
-        sourceField, "Data source name", gbc);
-
-    addLabelFieldPair(mainPanel, "JDBC URL:",
-        urlField, "The full JDBC URL for this connection (optional)", gbc);
+    addLabelFieldPair(mainPanel, "Database:",
+        sourceField, "Database name", gbc);
 
     addDriverFields(mainPanel, gbc);
 
@@ -512,9 +501,8 @@ public class ConnectionPanel extends ActionPanel
             certificateCombo.setEnabled(false);
             certInfoButton.setEnabled(false);
             System.setProperty("ncore.db.mf.auth", "false");
-            System.setProperty("ncore.db.mf.cert", "false");
             System.setProperty("ncore.db.mf.cert_alias", "");
-            System.setProperty("ncore.db.mf.uselogin", "");
+            System.setProperty("ncore.db.mf.uselogin", "true");
             break;
           case "Username and password (GOST R 34.11-94)":
             userField.setEnabled(true);
@@ -522,7 +510,6 @@ public class ConnectionPanel extends ActionPanel
             certificateCombo.setEnabled(false);
             certInfoButton.setEnabled(false);
             System.setProperty("ncore.db.mf.auth", "true");
-            System.setProperty("ncore.db.mf.cert", "false");
             System.setProperty("ncore.db.mf.cert_alias", "");
             System.setProperty("ncore.db.mf.uselogin", "true");
             break;
@@ -532,7 +519,6 @@ public class ConnectionPanel extends ActionPanel
             certificateCombo.setEnabled(true);
             certInfoButton.setEnabled(true);
             System.setProperty("ncore.db.mf.auth", "true");
-            System.setProperty("ncore.db.mf.cert", "true");
             System.setProperty("ncore.db.mf.cert_alias", certificateCombo.getSelectedItem().toString());
             System.setProperty("ncore.db.mf.uselogin", "true");
             break;
@@ -542,7 +528,6 @@ public class ConnectionPanel extends ActionPanel
             certificateCombo.setEnabled(true);
             certInfoButton.setEnabled(true);
             System.setProperty("ncore.db.mf.auth", "true");
-            System.setProperty("ncore.db.mf.cert", "true");
             System.setProperty("ncore.db.mf.cert_alias", certificateCombo.getSelectedItem().toString());
             System.setProperty("ncore.db.mf.uselogin", "false");
             break;
@@ -553,8 +538,8 @@ public class ConnectionPanel extends ActionPanel
             certificateCombo.setEnabled(false);
             certInfoButton.setEnabled(false);
             System.setProperty("ncore.db.mf.auth", "false");
-            System.setProperty("ncore.db.mf.cert", "false");
             System.setProperty("ncore.db.mf.cert_alias", "");
+            System.setProperty("ncore.db.mf.uselogin", "true");
             break;
         }
       }
@@ -655,13 +640,12 @@ public class ConnectionPanel extends ActionPanel
       return;
     }
     // check if we have a url - if not check the port is valid
-    if (StringUtils.isBlank(urlField.getText())) {
-      String port = portField.getText();
-      if (!StringUtils.isNumeric(port)) {
-        GUIUtilities.displayErrorMessage("Invalid port number");
-        return;
-      }
+    String port = portField.getText();
+    if (!StringUtils.isNumeric(port)) {
+      GUIUtilities.displayErrorMessage("Invalid port number");
+      return;
     }
+
     // otherwise - good to proceed
 
     // populate the object with field values
@@ -1024,7 +1008,6 @@ public class ConnectionPanel extends ActionPanel
     hostField.setText(databaseConnection.getHost());
     portField.setText(databaseConnection.getPort());
     sourceField.setText(databaseConnection.getSourceName());
-    urlField.setText(databaseConnection.getURL());
     nameField.setText(databaseConnection.getName());
 
     // assign as the current connection
@@ -1061,7 +1044,6 @@ public class ConnectionPanel extends ActionPanel
     databaseConnection.setHost(hostField.getText());
     databaseConnection.setPort(portField.getText());
     databaseConnection.setSourceName(sourceField.getText());
-    databaseConnection.setURL(urlField.getText());
 
     // jdbc driver selection
     int driverIndex = driverCombo.getSelectedIndex();
