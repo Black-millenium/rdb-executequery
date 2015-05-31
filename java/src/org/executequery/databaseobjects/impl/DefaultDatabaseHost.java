@@ -816,14 +816,14 @@ public class DefaultDatabaseHost extends AbstractNamedObject
    * Returns the database source with the name specified scanning schema
    * sources first, then catalogs.
    *
-   * @param the name
+   * @param name name
    * @return the database source object
    */
   public DatabaseSource getDatabaseSource(String name) {
 
     if (name == null) {
 
-      return getDatabaseSource(getDefaultNamePrefix());
+      return getDefaultDatabaseSource();
     }
 
     DatabaseSource source = findByName(getSchemas(), name);
