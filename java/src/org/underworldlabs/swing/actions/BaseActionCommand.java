@@ -140,7 +140,6 @@ public class BaseActionCommand extends AbstractAction {
     } catch (Exception e) {
       e.printStackTrace();
     }
-
   }
 
   /**
