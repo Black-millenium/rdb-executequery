@@ -215,42 +215,24 @@ public class DefaultDatabaseMetaTag extends AbstractNamedObject
 
   public boolean hasChildObjects() throws DataSourceException {
 
-    if (!isMarkedForReload() && children != null) {
-
-      return !children.isEmpty();
-    }
-
+    if (!isMarkedForReload() && children != null) { return !children.isEmpty(); }
     try {
-
       int type = getSubType();
       if (type != SYSTEM_FUNCTION) {
-
         if (isFunctionOrProcedure()) {
-
           if (StringUtils.equalsIgnoreCase(getName(), procedureTerm())) {
-
             if (type == FUNCTION) {
-
               return hasFunctions();
-
             } else if (type == PROCEDURE) {
-
               return hasProcedures();
             }
-
           }
-
           return false;
-
         } else {
-
           return getHost().hasTablesForType(getCatalogName(), getSchemaName(), getMetaDataKey());
         }
-
       }
-
     } catch (SQLException e) {
-
       logThrowable(e);
       return false;
     }
