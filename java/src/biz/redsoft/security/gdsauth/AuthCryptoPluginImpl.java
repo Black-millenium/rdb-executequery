@@ -45,10 +45,11 @@ public class AuthCryptoPluginImpl extends AuthCryptoPlugin {
       throw new AuthCryptoException(e);
     }
     try {
+      // поищем сначала в контейнерах
       final AuthPrivateKeyContext keyContext = findCertInContainers(certBase64);
       if (keyContext != null)
         return keyContext;
-
+      // на Linux мы должны сами поискать сертификат в хранилище, так как  риптоѕро не ищет.
       final _CERT_CONTEXT.PCCERT_CONTEXT cert = CertUtils.findCertificate(myStore, certContext);
       if (cert == null)
         throw new AuthException("Can't find certificate in personal store");
