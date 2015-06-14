@@ -27,6 +27,7 @@ import org.underworldlabs.jdbc.DataSourceException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +36,6 @@ import java.util.List;
  *
  * @author Takis Diakoumis
  * @version $Revision: 161 $
- * @date $Date: 2013-04-25 16:00:50 +0400 (Чт, 25 апр 2013) $
  */
 public class DefaultDatabaseMetaTag extends AbstractNamedObject
     implements DatabaseMetaTag {
@@ -115,61 +115,60 @@ public class DefaultDatabaseMetaTag extends AbstractNamedObject
   public List<NamedObject> getObjects() throws DataSourceException {
 
     if (!isMarkedForReload() && children != null) {
-
       return children;
     }
 
     int type = getSubType();
-    if (type != SYSTEM_FUNCTION) {
 
-
-      if (isFunctionOrProcedure()) {
-
-        children = loadFunctionsOrProcedures(type);
-
-      } else {
-
-        children = getHost().getTables(getCatalogName(),
-            getSchemaName(),
-            getMetaDataKey());
-
-        if (children != null && type == TABLE) {
-
-          // reset as editable tables for a default
-          // connection and meta type TABLE
-
+    switch (type) {
+      case DOMAIN:
+        children = getDomains();
+        if (children != null) {
           List<NamedObject> _children = new ArrayList<NamedObject>(children.size());
           for (NamedObject i : children) {
+            _children.add(new DefaultDatabaseDomain((DatabaseObject) i));
+          }
+          children = _children;
+        }
+        break;
 
+      case FUNCTION:
+      case PROCEDURE:
+        children = loadFunctionsOrProcedures(type);
+        break;
+
+      case TABLE:
+        children = getHost().getTables(null, null, getMetaDataKey());
+        if (children != null) {
+          List<NamedObject> _children = new ArrayList<NamedObject>(children.size());
+          for (NamedObject i : children) {
             _children.add(new DefaultDatabaseTable((DatabaseObject) i));
           }
-
           children = _children;
+        }
+        break;
 
-        } else if (type == VIEW) {
-
+      case VIEW:
+        children = getHost().getTables(null, null, getMetaDataKey());
+        if (children != null) {
           List<NamedObject> _children = new ArrayList<NamedObject>(children.size());
           for (NamedObject i : children) {
-
             _children.add(new DefaultDatabaseView((DatabaseObject) i));
           }
-
           children = _children;
-
         }
+        break;
 
-      }
+      case SYSTEM_FUNCTION:
+        children = getSystemFunctionTypes();
+        break;
 
-    } else {
-
-      // system functions break down further
-
-      children = getSystemFunctionTypes();
+      case SYSTEM_TABLE:
+        children = getHost().getTables(null, null, getMetaDataKey());
+        break;
     }
 
-    // loop through and add this object as the parent object
     addAsParentToObjects(children);
-
     return children;
   }
 
@@ -214,30 +213,51 @@ public class DefaultDatabaseMetaTag extends AbstractNamedObject
   }
 
   public boolean hasChildObjects() throws DataSourceException {
+    if (!isMarkedForReload() && children != null) return !children.isEmpty();
 
-    if (!isMarkedForReload() && children != null) { return !children.isEmpty(); }
     try {
       int type = getSubType();
-      if (type != SYSTEM_FUNCTION) {
-        if (isFunctionOrProcedure()) {
-          if (StringUtils.equalsIgnoreCase(getName(), procedureTerm())) {
-            if (type == FUNCTION) {
-              return hasFunctions();
-            } else if (type == PROCEDURE) {
-              return hasProcedures();
-            }
+
+      switch (type) {
+        case DOMAIN:
+          return hasDomains();
+
+        case FUNCTION:
+          if (isFunctionOrProcedure()) {
+            return StringUtils.equalsIgnoreCase(getName(), procedureTerm()) && hasFunctions();
           }
-          return false;
-        } else {
-          return getHost().hasTablesForType(getCatalogName(), getSchemaName(), getMetaDataKey());
-        }
+          break;
+
+        case PROCEDURE:
+          if (isFunctionOrProcedure()) {
+            return StringUtils.equalsIgnoreCase(getName(), procedureTerm()) && hasProcedures();
+          }
+          break;
+
+        case SYSTEM_FUNCTION:
+          break;
+
+        default:
+          return getHost().hasTablesForType(null, null, getMetaDataKey());
       }
     } catch (SQLException e) {
       logThrowable(e);
       return false;
     }
-
     return true;
+  }
+
+  private boolean hasDomains() {
+    ResultSet rs = null;
+    try {
+      rs = getDomainsResultSet();
+      return rs != null && rs.next();
+    } catch (SQLException e) {
+      logThrowable(e);
+      return false;
+    } finally {
+      releaseResources(rs);
+    }
   }
 
   private boolean isFunctionOrProcedure() {
@@ -370,6 +390,39 @@ public class DefaultDatabaseMetaTag extends AbstractNamedObject
 
     // TODO: 1.6 getFunctions
     return dmd.getProcedures(catalogName, schemaName, null);
+  }
+
+  private List<NamedObject> getDomains() throws DataSourceException {
+    ResultSet rs = null;
+    try {
+      rs = getDomainsResultSet();
+      List<NamedObject> list = new ArrayList<NamedObject>();
+      while (rs.next()) {
+        DefaultDatabaseDomain domain = new DefaultDatabaseDomain(getHost(), rs.getString(1));
+        domain.setRemarks(rs.getString(4));
+        list.add(domain);
+      }
+      return list;
+    } catch (SQLException e) {
+      logThrowable(e);
+      return new ArrayList<NamedObject>(0);
+    } finally {
+      releaseResources(rs);
+    }
+  }
+
+  private ResultSet getDomainsResultSet() throws SQLException {
+    Statement stmt = getHost().getConnection().createStatement();
+
+    return stmt.executeQuery(
+        "SELECT RF.RDB$FIELD_NAME,\n" +
+        "    RT.RDB$TYPE_NAME,\n" +
+        "    RF.RDB$VALIDATION_SOURCE,\n" +
+        "    RF.RDB$DESCRIPTION\n" +
+        "FROM RDB$FIELDS RF JOIN RDB$TYPES RT ON\n" +
+        "    RF.RDB$FIELD_TYPE = RT.RDB$TYPE\n" +
+        "WHERE RF.RDB$SYSTEM_FLAG = 0 AND\n" +
+        "    RT.RDB$FIELD_NAME='RDB$FIELD_TYPE';");
   }
 
   /**

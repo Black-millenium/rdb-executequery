@@ -50,22 +50,22 @@ public class BrowserConstants {
   public static final int TABLE_NODE = 6;
   public static final int TRIGGER_NODE = 7;
   public static final int VIEW_NODE = 8;
+  public static final int DOMAIN = 14;
 
   public static final int SYSTEM_FUNCTION_NODE = 9;
 
   public static final int SYSTEM_STRING_FUNCTIONS_NODE = 10;
 
   public static final int SYSTEM_NUMERIC_FUNCTIONS_NODE = 11;
-
   public static final int SYSTEM_DATE_TIME_FUNCTIONS_NODE = 12;
 
   public static final int OTHER_NODE = 95;
-
   public static final int COLUMN_NODE = 94;
 
 
   // same index as node values above
-  public static final String[] META_TYPES = {"FUNCTION",
+  public static final String[] META_TYPES = {
+      "FUNCTION",
       "INDEX",
       "PROCEDURE",
       "SEQUENCE",
@@ -74,13 +74,19 @@ public class BrowserConstants {
       "TABLE",
       "TRIGGER",
       "VIEW",
-      "SYSTEM FUNCTIONS"};
+      "SYSTEM FUNCTIONS",
+      "",
+      "",
+      "",
+      "",
+      "DOMAIN"};
 
   // ------------------------------------------
   // to add a new node - ALL icons must be in same order as META_TYPES
   // ------------------------------------------
 
-  public static final String[] META_TYPE_ICONS = {"Function24.png",
+  public static final String[] META_TYPE_ICONS = {
+      "Function24.png",
       "TableIndex24.png",
       "Procedure24.png",
       "Sequence24.png",
@@ -91,7 +97,11 @@ public class BrowserConstants {
       //                              "Trigger24.png",
       "TableView24.png",
       "TableColumn24.png",
-      "SystemFunction24.png"}; // system function
+      "SystemFunction24.png",
+      "",
+      "",
+      "",
+      "Domain24.png"}; // system function
 
   /** The String 'All Types' */
   //  String ALL_TYPES = "All Types";
@@ -245,7 +255,10 @@ public class BrowserConstants {
 
   public static final String TABLE_TRIGGER_IMAGE = "TableTrigger16.png";
 
-  public static final String[] NODE_ICONS = {CONNECTIONS_IMAGE,
+  public static final String DOMAIN_IMAGE = "Domain16.png";
+
+  public static final String[] NODE_ICONS = {
+      CONNECTIONS_IMAGE,
       CONNECTIONS_FOLDER_IMAGE,
       CATALOG_IMAGE,
       HOST_IMAGE,
@@ -265,7 +278,8 @@ public class BrowserConstants {
       PRIMARY_COLUMNS_IMAGE,
       FOREIGN_COLUMNS_IMAGE,
       SYSTEM_VIEWS_IMAGE,
-      TABLE_TRIGGER_IMAGE
+      TABLE_TRIGGER_IMAGE,
+      DOMAIN_IMAGE
   };
 
 }
