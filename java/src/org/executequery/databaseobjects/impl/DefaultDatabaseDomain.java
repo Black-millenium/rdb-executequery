@@ -12,9 +12,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Roman on 12.06.2015.
- */
 public class DefaultDatabaseDomain extends DefaultDatabaseObject
     implements DatabaseDomain {
 
