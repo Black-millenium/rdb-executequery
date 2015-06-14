@@ -133,8 +133,22 @@ public class DefaultDatabaseMetaTag extends AbstractNamedObject
         break;
 
       case FUNCTION:
+        try {
+          if (StringUtils.equalsIgnoreCase(getName(), procedureTerm())) {
+            children = getFunctions();
+          }
+        } catch (SQLException e) {
+          e.printStackTrace();
+        }
+        break;
       case PROCEDURE:
-        children = loadFunctionsOrProcedures(type);
+        try {
+          if (StringUtils.equalsIgnoreCase(getName(), procedureTerm())) {
+            children = getProcedures();
+          }
+        } catch (SQLException e) {
+          e.printStackTrace();
+        }
         break;
 
       case TABLE:
@@ -183,33 +197,6 @@ public class DefaultDatabaseMetaTag extends AbstractNamedObject
 
     }
 
-  }
-
-  private List<NamedObject> loadFunctionsOrProcedures(int type)
-      throws DataSourceException {
-
-    try {
-
-      if (StringUtils.equalsIgnoreCase(getName(), procedureTerm())) {
-
-        // check what the term is - proc or function
-        if (type == FUNCTION) {
-
-          return getFunctions();
-
-        } else if (type == PROCEDURE) {
-
-          return getProcedures();
-        }
-
-      }
-
-    } catch (SQLException e) {
-
-      throw new DataSourceException(e);
-    }
-
-    return new ArrayList<NamedObject>(0);
   }
 
   public boolean hasChildObjects() throws DataSourceException {
@@ -416,13 +403,13 @@ public class DefaultDatabaseMetaTag extends AbstractNamedObject
 
     return stmt.executeQuery(
         "SELECT RF.RDB$FIELD_NAME,\n" +
-        "    RT.RDB$TYPE_NAME,\n" +
-        "    RF.RDB$VALIDATION_SOURCE,\n" +
-        "    RF.RDB$DESCRIPTION\n" +
-        "FROM RDB$FIELDS RF JOIN RDB$TYPES RT ON\n" +
-        "    RF.RDB$FIELD_TYPE = RT.RDB$TYPE\n" +
-        "WHERE RF.RDB$SYSTEM_FLAG = 0 AND\n" +
-        "    RT.RDB$FIELD_NAME='RDB$FIELD_TYPE';");
+            "    RT.RDB$TYPE_NAME,\n" +
+            "    RF.RDB$VALIDATION_SOURCE,\n" +
+            "    RF.RDB$DESCRIPTION\n" +
+            "FROM RDB$FIELDS RF JOIN RDB$TYPES RT ON\n" +
+            "    RF.RDB$FIELD_TYPE = RT.RDB$TYPE\n" +
+            "WHERE RF.RDB$SYSTEM_FLAG = 0 AND\n" +
+            "    RT.RDB$FIELD_NAME='RDB$FIELD_TYPE';");
   }
 
   /**
